@@ -4,6 +4,7 @@ import pg from "pg";
 import bcrypt from "bcrypt";
 import passport from "passport";
 import { Strategy } from "passport-local";
+import GoogleStrategy  from "passport-google-oauth2";
 import session from "express-session";
 import dotenv from "dotenv";
 
@@ -69,11 +70,10 @@ app.get("/login", (req, res) => {
   });
   
   app.get(
-    "/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: "/" }),
-    (req, res) => {
-      res.redirect("/dashboard"); // Амжилттай бол dashboard руу
-    }
+    "/auth/google",
+    passport.authenticate("google",{
+      scope: ["profile", "email"],
+    }) 
   );
 
   app.get(
@@ -128,6 +128,82 @@ try {
   console.log(err);
 }
   });
+  passport.use(
+    "local",
+    new Strategy(async function verify(username, password, cb) {
+      try {
+        // SQL query-ийг зөв бичих
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [username]);
+  
+        if (result.rows.length > 0) {
+          const user = result.rows[0];
+          const storedHashedPassword = user.password;
+  
+          // bcrypt.compare ашиглах
+          bcrypt.compare(password, storedHashedPassword, (err, valid) => {
+            if (err) {
+              console.error("Error comparing passwords:", err);
+              return cb(err);
+            }
+  
+            // Хэрэв зөв үг оруулсан бол
+            if (valid) {
+              return cb(null, user);
+            } else {
+              // Хэрэв буруу нууц үг орсон бол
+              return cb(null, false);
+            }
+          });
+        } else {
+          // Хэрэглэгч олдсонгүй гэдгийг илгээх
+          return cb(null, false);
+        }
+      } catch (err) {
+        console.log(err);
+        return cb(err);
+      }
+    })
+  );
+
+  passport.use(
+    "google",
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: "http://localhost:3000/auth/google/secrets",
+        userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+      },
+      async (accessToken, refreshToken, profile, cb) => {
+        try {
+          console.log(profile);
+  
+          // Хэрэглэгчийн email-ийг шалгах
+          const result = await db.query("SELECT * FROM users WHERE email = $1", [
+            profile.email,
+          ]);
+  
+          if (result.rows.length === 0) {
+            // Хэрэглэгч олдсонгүй, шинэ хэрэглэгч бүртгэх
+            const newUser = await db.query(
+              "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+              [profile.email, "google"]
+            );
+  
+            // Шинэ хэрэглэгчийг буцаах
+            return cb(null, newUser.rows[0]);
+          } else {
+            // Хэрэглэгч олдсон бол, тус хэрэглэгчийн мэдээллийг буцаах
+            return cb(null, result.rows[0]);
+          }
+        } catch (err) {
+          // Алдаа гарсан тохиолдолд
+          return cb(err);
+        }
+      }
+    )
+  );
+  
 
 passport.use(
     new Strategy(async function verify(username, password, cb) {

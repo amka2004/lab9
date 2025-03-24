@@ -6,18 +6,29 @@
         <div class="col-sm-8">
             <div class="card">
                 <div class="card-body">
-
-                    <form action="/register" method="post">
+                    <!-- Makes POST request to /register route -->
+                    <form action="/register" method="POST">
                         <div class="form-group">
-                          <label for="email">Email</label>
-                          <input type="email" class="form-control" name="email" id="email" required>
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" name="email">
                         </div>
                         <div class="form-group">
-                          <label for="password">Password</label>
-                          <input type="password" class="form-control" name="password" id="password" required>
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" name="password">
                         </div>
                         <button type="submit" class="btn btn-dark">Register</button>
-                      </form>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-4">
+            <div class="card social-block">
+                <div class="card-body">
+                    <!-- Google Sign-up button -->
+                    <a class="btn btn-block btn-danger" href="/auth/google" role="button">
+                        <i class="fab fa-google"></i> Sign Up with Google
+                    </a>
                 </div>
             </div>
         </div>
