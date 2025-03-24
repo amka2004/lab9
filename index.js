@@ -68,6 +68,23 @@ app.get("/login", (req, res) => {
     }
   });
   
+  app.get(
+    "/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/" }),
+    (req, res) => {
+      res.redirect("/dashboard"); // Амжилттай бол dashboard руу
+    }
+  );
+
+  app.get(
+    "/auth/google/secrets",
+    passport.authenticate("google", {
+      successRedirect: "/secrets",
+      failureRedirect: "/login",
+    })
+  );
+  
+
   app.post(
     "/login",
     passport.authenticate("local", {
