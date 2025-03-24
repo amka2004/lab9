@@ -45,7 +45,7 @@ app.get("/login", (req, res) => {
     res.render("login.ejs");
   });
   
-  app.get("/Register", (req, res) => {
+  app.get("/register", (req, res) => {
     res.render("register.ejs");
   });
   
@@ -118,7 +118,7 @@ try {
           const user = result.rows[0];
           req.login(user, (err) => {
             console.log("success");
-            res.redirect("/secret");
+            res.redirect("/secrets");
           });
     
       }
